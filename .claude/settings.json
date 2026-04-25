@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "command": "if echo \"$CLAUDE_FILE_PATH\" | grep -q '\\.swift$'; then swiftformat \"$CLAUDE_FILE_PATH\" --quiet; swiftlint lint --path \"$CLAUDE_FILE_PATH\" --quiet; fi"
+      }
+    ],
+    "PreCommit": [
+      {
+        "command": "swiftformat --lint . && swiftlint --strict"
+      },
+      {
+        "command": "xcodebuild -project TheCouncil.xcodeproj -scheme TheCouncil -quiet test -only-testing:TheCouncilTests || exit 1"
+      }
+    ],
+    "PhaseClose": [
+      {
+        "command": "./scripts/airgap-verify.sh"
+      }
+    ]
+  },
+  "projectContext": {
+    "mustReadDocs": [
+      "CLAUDE.md",
+      "PRD.md",
+      "SPEC.md",
+      "PLAN.md",
+      "TASKS.md",
+      "STYLE.md",
+      "TESTING.md"
+    ],
+    "authoritativeFor": {
+      "schema": "SPEC.md §3.1",
+      "modelIds": "SPEC.md §6.1",
+      "keychainServiceNames": "SPEC.md §5",
+      "filePaths": "SPEC.md §3",
+      "acceptanceCriteria": "SPEC.md §13"
+    }
+  },
+  "hardRules": [
+    "No telemetry, analytics, or crash reporting SDKs",
+    "No iCloud, cloud sync, or account system",
+    "API keys in Keychain only, never written to disk or logs",
+    "Air gap enforcement verified before every council run when enabled",
+    "No third-party dependencies beyond SPEC §2",
+    "No Combine in new code (AsyncStream only)",
+    "Never mutate a shipped migration (append new)"
+  ]
+}

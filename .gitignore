@@ -1,0 +1,63 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+**/xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# SPM
+.build/
+.swiftpm/
+Package.resolved
+.package.resolved
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Secrets and local config
+*.env
+*.env.local
+Config/secrets.plist
+*.p12
+*.cer
+*.mobileprovision
+
+# Local model weights (large)
+models/
+Resources/LocalModels/
+*.gguf
+*.safetensors
+*.mlx
+
+# Test artifacts
+*.xcresult
+coverage/
+fastlane/report.xml
+fastlane/Preview.html
+
+# DMG and notarization artifacts
+*.dmg
+*.zip
+notarization-*.json
+
+# User-specific IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Private friction log
+friction-log.txt
+dogfood-notes.md

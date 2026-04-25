@@ -1,0 +1,13 @@
+{
+  "id": "market-entry",
+  "label": "Market entry or expansion",
+  "default_personas": [
+    "strategist",
+    "outsider",
+    "customer-voice",
+    "regulator",
+    "skeptic"
+  ],
+  "default_rounds": 3,
+  "default_samples": 3
+}

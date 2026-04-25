@@ -1,0 +1,12 @@
+{
+  "id": "org-design",
+  "label": "Org design and team structure",
+  "default_personas": [
+    "operator",
+    "strategist",
+    "outsider",
+    "skeptic"
+  ],
+  "default_rounds": 3,
+  "default_samples": 3
+}

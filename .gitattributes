@@ -1,0 +1,23 @@
+# Treat Xcode project files as binary to prevent merge issues
+*.pbxproj merge=union
+*.xcworkspace binary
+*.xcodeproj binary
+
+# Line endings
+* text=auto eol=lf
+*.sh text eol=lf
+*.swift text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.mlx binary
+*.safetensors binary
+*.gguf binary

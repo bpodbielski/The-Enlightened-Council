@@ -1,0 +1,13 @@
+{
+  "id": "make-buy-partner",
+  "label": "Make vs buy vs partner",
+  "default_personas": [
+    "strategist",
+    "finance-lens",
+    "operator",
+    "outsider",
+    "first-principles"
+  ],
+  "default_rounds": 3,
+  "default_samples": 3
+}

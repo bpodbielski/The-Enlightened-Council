@@ -1,0 +1,13 @@
+{
+  "id": "strategic-bet",
+  "label": "Strategic bet and capital allocation",
+  "default_personas": [
+    "strategist",
+    "finance-lens",
+    "risk-officer",
+    "operator",
+    "skeptic"
+  ],
+  "default_rounds": 3,
+  "default_samples": 3
+}

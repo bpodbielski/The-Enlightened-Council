@@ -1,0 +1,13 @@
+{
+  "id": "pilot-to-scale",
+  "label": "Pilot to scale transition",
+  "default_personas": [
+    "operator",
+    "finance-lens",
+    "customer-voice",
+    "first-principles",
+    "risk-officer"
+  ],
+  "default_rounds": 3,
+  "default_samples": 3
+}

@@ -1,0 +1,14 @@
+{
+  "id": "pivot-scale-kill",
+  "label": "Pivot, scale, or kill",
+  "default_personas": [
+    "founder-mindset",
+    "finance-lens",
+    "customer-voice",
+    "operator",
+    "skeptic",
+    "first-principles"
+  ],
+  "default_rounds": 3,
+  "default_samples": 3
+}

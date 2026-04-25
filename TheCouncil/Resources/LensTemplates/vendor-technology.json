@@ -1,0 +1,12 @@
+{
+  "id": "vendor-technology",
+  "label": "Vendor or technology selection",
+  "default_personas": [
+    "operator",
+    "finance-lens",
+    "risk-officer",
+    "first-principles"
+  ],
+  "default_rounds": 3,
+  "default_samples": 3
+}

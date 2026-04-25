@@ -1,0 +1,12 @@
+{
+  "id": "innovation-portfolio",
+  "label": "Innovation portfolio balance",
+  "default_personas": [
+    "strategist",
+    "finance-lens",
+    "founder-mindset",
+    "risk-officer"
+  ],
+  "default_rounds": 3,
+  "default_samples": 3
+}
