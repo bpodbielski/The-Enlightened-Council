@@ -4,6 +4,7 @@
 **Session scope:** Phase 6 (Verdict Capture) + post-Phase-6 connectivity hotfixes
 **Build status:** ✅ BUILD SUCCEEDED
 **Test status:** ✅ 122 tests pass (27 suites) + 1 opt-in diagnostic skipped by default
+**Repository:** [github.com/bpodbielski/The-Enlightened-Council](https://github.com/bpodbielski/The-Enlightened-Council) — public, default branch `main`, remote `origin` (HTTPS)
 
 ## Post-Phase-6 hotfixes (live)
 
@@ -344,6 +345,7 @@ python3 scripts/gen_xcodeproj.py
 - Every phase closes only when its PLAN.md definition-of-done items all pass
 - Run `/spec-check` scoped to the phase's SPEC sections before closing
 - Run `security-reviewer` before closing any phase that adds network or Keychain code
+- **Commit and push to `origin/main` at every phase close.** After build + tests are green and HANDOFF.md is updated, stage everything (`git add .`), commit with a message of the shape `Phase N — <title> (<status>)` summarising the phase deliverable, and `git push origin main`. The remote is the canonical source of truth between sessions; no phase is "closed" until its work is on GitHub. Mid-phase WIP commits are also welcome — push whenever a coherent slice lands.
 - Stop and ask before starting the next phase — one checkpoint per phase boundary
 - SPEC is authoritative for schema, model IDs, hostnames, paths, performance budgets, acceptance criteria
 - When SPEC is silent on an implementation question, stop and ask rather than guess; log the question in TASKS.md before pausing
