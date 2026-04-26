@@ -68,6 +68,7 @@ final class AllDecisionsViewModel {
 struct AllDecisionsView: View {
 
     @State private var viewModel = AllDecisionsViewModel()
+    var onSelectDecision: ((Decision) -> Void)? = nil
 
     var body: some View {
         Group {
@@ -111,7 +112,12 @@ struct AllDecisionsView: View {
         ScrollView {
             LazyVStack(spacing: 10) {
                 ForEach(viewModel.cards) { card in
-                    DecisionCardRow(card: card)
+                    Button {
+                        onSelectDecision?(card.decision)
+                    } label: {
+                        DecisionCardRow(card: card)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(16)

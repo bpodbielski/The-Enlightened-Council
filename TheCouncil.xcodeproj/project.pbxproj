@@ -59,6 +59,11 @@
 		5067800F09B5AF38CC3E5CFB /* VerdictTray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 927DEC8E856FCC21E6C93487 /* VerdictTray.swift */; };
 		6B75A8E1AD101947C3897C5E /* VerdictCaptureViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703DF8F4737F6F56381CFB50 /* VerdictCaptureViewModel.swift */; };
 		6155181EFA2352BE5DFA19A8 /* VerdictCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41144FB093B980D4CE0324DF /* VerdictCaptureView.swift */; };
+		A91CBFC515E42198527E5576 /* OutcomeMarkingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E98758B7C2144FE53EEB07 /* OutcomeMarkingService.swift */; };
+		F712202BD626C125828AA067 /* CalibrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9813F1EDE6132136C035332 /* CalibrationService.swift */; };
+		CAC832252FE7DBD732C6F26D /* CalibrationPatternsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F649D6B391C5A1445A594985 /* CalibrationPatternsView.swift */; };
+		D5836EED87D022E58407823D /* ThisWeekViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAAC6B3AB8298E083E20EF13 /* ThisWeekViewModel.swift */; };
+		F95E6E85019B01ACB1607016 /* DecisionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F145912798C05F2028B10510 /* DecisionDetailView.swift */; };
 		E10CA906CEB0929CAA797174 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9D631593ECB0D7551C797637 /* Assets.xcassets */; };
 		CA6F78429349ED0339944507 /* LensTemplates in Resources */ = {isa = PBXBuildFile; fileRef = 48ECD84142B65CFFD3ADC6D8 /* LensTemplates */; };
 		2D61D461F7DD3FDF48F11AE4 /* Personas in Resources */ = {isa = PBXBuildFile; fileRef = 1C334F56ACBF07FC3D41E370 /* Personas */; };
@@ -86,6 +91,9 @@
 		BD667E01C34EBBC46A670D29 /* BarnesHutQuadtreeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E37056C805808E87EC0900F /* BarnesHutQuadtreeTests.swift */; };
 		649C104935131BDD0901A854 /* GraphViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D881CEDC6B37FFCF2E12DC9 /* GraphViewModelTests.swift */; };
 		B80EC02FCD8DE9783C9D28BC /* VerdictCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A4239CA61C5F40B83935C12 /* VerdictCaptureTests.swift */; };
+		4233E7286B6B878807C6D7F0 /* OutcomeMarkingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21D7D1E4300B2EEC38FF9A26 /* OutcomeMarkingServiceTests.swift */; };
+		140360C60A25F0C0FFD38DAE /* CalibrationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF02F5F8A9669A546CB9766C /* CalibrationServiceTests.swift */; };
+		263B37E6703B46A9BE4D2389 /* ThisWeekQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1688B87E22B8B288A8E878 /* ThisWeekQueryTests.swift */; };
 		3101B79C5C10A890A9A19E1C /* APIConnectivityDiagnostic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BDC9D3E9122E5D3820408F /* APIConnectivityDiagnostic.swift */; };
 		481E259D93A917D04D5387D2 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = DF4EBD091B662FB3F51D7CB7 /* GRDB */; };
 		9248834C4A4382D87096172F /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 763A5FFB4725E98013A1CBE6 /* KeychainAccess */; };
@@ -152,6 +160,11 @@
 		927DEC8E856FCC21E6C93487 /* VerdictTray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerdictTray.swift; sourceTree = "<group>"; };
 		703DF8F4737F6F56381CFB50 /* VerdictCaptureViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerdictCaptureViewModel.swift; sourceTree = "<group>"; };
 		41144FB093B980D4CE0324DF /* VerdictCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerdictCaptureView.swift; sourceTree = "<group>"; };
+		B9E98758B7C2144FE53EEB07 /* OutcomeMarkingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutcomeMarkingService.swift; sourceTree = "<group>"; };
+		D9813F1EDE6132136C035332 /* CalibrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationService.swift; sourceTree = "<group>"; };
+		F649D6B391C5A1445A594985 /* CalibrationPatternsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationPatternsView.swift; sourceTree = "<group>"; };
+		BAAC6B3AB8298E083E20EF13 /* ThisWeekViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisWeekViewModel.swift; sourceTree = "<group>"; };
+		F145912798C05F2028B10510 /* DecisionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecisionDetailView.swift; sourceTree = "<group>"; };
 		89F32CDF394D1B68451AE84D /* DatabaseMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrationTests.swift; sourceTree = "<group>"; };
 		BD7CFE0A8EC2166514FB6253 /* KeychainStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStoreTests.swift; sourceTree = "<group>"; };
 		8BEC03BB04F881646A360E34 /* ForceSimulationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForceSimulationTests.swift; sourceTree = "<group>"; };
@@ -176,6 +189,9 @@
 		2E37056C805808E87EC0900F /* BarnesHutQuadtreeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarnesHutQuadtreeTests.swift; sourceTree = "<group>"; };
 		5D881CEDC6B37FFCF2E12DC9 /* GraphViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphViewModelTests.swift; sourceTree = "<group>"; };
 		9A4239CA61C5F40B83935C12 /* VerdictCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerdictCaptureTests.swift; sourceTree = "<group>"; };
+		21D7D1E4300B2EEC38FF9A26 /* OutcomeMarkingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutcomeMarkingServiceTests.swift; sourceTree = "<group>"; };
+		DF02F5F8A9669A546CB9766C /* CalibrationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationServiceTests.swift; sourceTree = "<group>"; };
+		6E1688B87E22B8B288A8E878 /* ThisWeekQueryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisWeekQueryTests.swift; sourceTree = "<group>"; };
 		02BDC9D3E9122E5D3820408F /* APIConnectivityDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConnectivityDiagnostic.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 /* Begin PBXFrameworksBuildPhase section */
@@ -236,6 +252,7 @@
 				416E987C4A2DEA7CA671D991 /* LocalInference */,
 				3E518B52062A82C75611A5E2 /* Orchestration */,
 				C8EE5219CAC228ED0960168F /* Features */,
+				BEE3A28EAC789A273F7F5297 /* Calibration */,
 				D85ED40BEED6DC72283D2362 /* ForceGraph */,
 				FCA60E56E1FE36D3D0D37A3A /* Resources */,
 				9D631593ECB0D7551C797637 /* Assets.xcassets */,
@@ -418,6 +435,7 @@
 			isa = PBXGroup;
 			children = (
 				9A1717F0DEF835179E8F4FFF /* ThisWeekView.swift */,
+				BAAC6B3AB8298E083E20EF13 /* ThisWeekViewModel.swift */,
 			);
 			path = ThisWeek;
 			sourceTree = "<group>";
@@ -426,8 +444,19 @@
 			isa = PBXGroup;
 			children = (
 				5E2BAC27930F6F1D7DDC282A /* AllDecisionsView.swift */,
+				F145912798C05F2028B10510 /* DecisionDetailView.swift */,
 			);
 			path = DecisionDetail;
+			sourceTree = "<group>";
+		};
+		BEE3A28EAC789A273F7F5297 /* Calibration */ = {
+			isa = PBXGroup;
+			children = (
+				B9E98758B7C2144FE53EEB07 /* OutcomeMarkingService.swift */,
+				D9813F1EDE6132136C035332 /* CalibrationService.swift */,
+				F649D6B391C5A1445A594985 /* CalibrationPatternsView.swift */,
+			);
+			path = Calibration;
 			sourceTree = "<group>";
 		};
 		32250FB38B75F52202ABE788 /* SynthesisMap */ = {
@@ -462,6 +491,8 @@
 				A89B10A81A9FFEAE728D53EC /* LocalInference */,
 				0C87054D2C7F8DE7AFA84EBA /* SynthesisMap */,
 				9FFE0C85ADFE74A9E465DDC1 /* VerdictCapture */,
+				2F126D3C52DF6A4176E02C1A /* ThisWeek */,
+				516C25BE8AEA9D96F9C452AB /* Calibration */,
 				AD94D13336A6797B486B3946 /* Diagnostics */,
 			);
 			path = TheCouncilTests;
@@ -559,6 +590,23 @@
 				9A4239CA61C5F40B83935C12 /* VerdictCaptureTests.swift */,
 			);
 			path = VerdictCapture;
+			sourceTree = "<group>";
+		};
+		2F126D3C52DF6A4176E02C1A /* ThisWeek */ = {
+			isa = PBXGroup;
+			children = (
+				6E1688B87E22B8B288A8E878 /* ThisWeekQueryTests.swift */,
+			);
+			path = ThisWeek;
+			sourceTree = "<group>";
+		};
+		516C25BE8AEA9D96F9C452AB /* Calibration */ = {
+			isa = PBXGroup;
+			children = (
+				21D7D1E4300B2EEC38FF9A26 /* OutcomeMarkingServiceTests.swift */,
+				DF02F5F8A9669A546CB9766C /* CalibrationServiceTests.swift */,
+			);
+			path = Calibration;
 			sourceTree = "<group>";
 		};
 		AD94D13336A6797B486B3946 /* Diagnostics */ = {
@@ -724,6 +772,11 @@
 				5067800F09B5AF38CC3E5CFB /* VerdictTray.swift in Sources */,
 				6B75A8E1AD101947C3897C5E /* VerdictCaptureViewModel.swift in Sources */,
 				6155181EFA2352BE5DFA19A8 /* VerdictCaptureView.swift in Sources */,
+				A91CBFC515E42198527E5576 /* OutcomeMarkingService.swift in Sources */,
+				F712202BD626C125828AA067 /* CalibrationService.swift in Sources */,
+				CAC832252FE7DBD732C6F26D /* CalibrationPatternsView.swift in Sources */,
+				D5836EED87D022E58407823D /* ThisWeekViewModel.swift in Sources */,
+				F95E6E85019B01ACB1607016 /* DecisionDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -755,6 +808,9 @@
 				BD667E01C34EBBC46A670D29 /* BarnesHutQuadtreeTests.swift in Sources */,
 				649C104935131BDD0901A854 /* GraphViewModelTests.swift in Sources */,
 				B80EC02FCD8DE9783C9D28BC /* VerdictCaptureTests.swift in Sources */,
+				4233E7286B6B878807C6D7F0 /* OutcomeMarkingServiceTests.swift in Sources */,
+				140360C60A25F0C0FFD38DAE /* CalibrationServiceTests.swift in Sources */,
+				263B37E6703B46A9BE4D2389 /* ThisWeekQueryTests.swift in Sources */,
 				3101B79C5C10A890A9A19E1C /* APIConnectivityDiagnostic.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

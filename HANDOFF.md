@@ -1,10 +1,46 @@
 # The Council — Handoff Document
 
-**Date:** 2026-04-25
-**Session scope:** Phase 6 (Verdict Capture) + post-Phase-6 connectivity hotfixes
+**Date:** 2026-04-26
+**Session scope:** Phase 7 (Calibration Ledger) — closes on top of Phases 0–6
 **Build status:** ✅ BUILD SUCCEEDED
-**Test status:** ✅ 122 tests pass (27 suites) + 1 opt-in diagnostic skipped by default
+**Test status:** ✅ 141 tests pass (30 suites) + 1 opt-in diagnostic skipped by default
 **Repository:** [github.com/bpodbielski/The-Enlightened-Council](https://github.com/bpodbielski/The-Enlightened-Council) — public, default branch `main`, remote `origin` (HTTPS)
+
+## Phase 7 — Calibration Ledger (CLOSED, core)
+
+| Deliverable | Notes |
+|---|---|
+| `OutcomeStatus.dismissed` | Added the missing case + `isTerminal` computed property. Schema accepts it (Migration001 column comment already lists `dismissed`); the enum just hadn't caught up. |
+| `Outcome` memberwise init | Added — Codable + custom `init(row:)` was suppressing synthesis (same fix shape as Phase 6's Verdict). |
+| `OutcomeMarkingService` | `actor`. Owns the SPEC §6.9 state machine: `pending → right \| partial \| wrong \| dismissed`, terminal. `mark(verdictId:result:actualNotes:whatChanged:)` inserts an `outcomes` row + flips `verdicts.outcome_status` in a single GRDB write transaction. `dismiss(verdictId:)` updates the verdict status only (no outcomes row, since "dismissed" has no result to record). Both paths call a private `assertPending` guard that throws `OutcomeMarkingError.alreadyTerminal` if a terminal verdict is re-marked, and `verdictNotFound` for unknown ids. Injectable `now` clock + `DatabaseManager`. |
+| `CalibrationService` | `actor` with `static patternThreshold = 20`. `gate()` returns `.insufficient(marked, threshold)` or `.ready(marked)`. `calibrationByLens()` and `calibrationByReversibility()` issue a SQL aggregate joining `outcomes → verdicts → decisions`, sorted by descending `right_rate` then ascending bucket label for stable display. `groupColumn` is hard-coded per method (never user input) to keep the dynamic SQL safe. |
+| `CalibrationPatternsView` | Sheet presented from This Week's toolbar. Uses Apple's `Charts` framework (system, no SPM addition). Below threshold → "Patterns appear after 20 marked outcomes. You have N so far." At/above threshold → two horizontal bar charts ("By lens template", "By reversibility") with `n=X` annotations. `chartXScale(domain: 0...1)` + percent axis. |
+| `ThisWeekViewModel` | `@Observable @MainActor`. Window predicate: `outcome_status = 'pending' AND (outcome_deadline <= now+7d OR outcome_deadline < now)`. Sort: ascending deadline. Per-row `notesDraft` and `whatChangedDraft` dictionaries collect the inline text fields. `mark(verdictId:result:)` and `dismiss(verdictId:)` call `OutcomeMarkingService` then reload. Static `fetchDueCount(db:now:)` powers the sidebar badge without instantiating the VM. |
+| `ThisWeekView` | Replaces the placeholder. Per-row card: question + verdict text + lens/confidence/deadline labels + "Overdue" pill when applicable, two text fields (notes, what changed), and four buttons (Right green / Partial yellow / Wrong red / Dismiss destructive). Toolbar `Calibration` button opens `CalibrationPatternsView` in a sheet. Empty-state message is friendly when nothing's due. |
+| `DecisionDetailView` | 5-tab segmented control: Brief / Council / Map / Verdict / Outcome (per SPEC §7.9). Brief = static metadata + refined brief. Council = scrollable transcript of `model_runs` (model · persona · round · sample) with truncated response cards and a "Maintained / Updated" pill on round-3 runs. Map = stub explaining the live Synthesis Map flow (full read-only graph rebuild deferred — flagged in TASKS.md). Verdict = read-only verdict brief (decoded `key_for_json`/`key_against_json` via `VerdictCaptureViewModel.decodeArgumentTexts`). Outcome = either the marking form (when `outcomeStatus == .pending`) or a record display (when terminal). |
+| `ContentView` integration | `.decisionDetail(Decision)` destination + `navigateToDecisionDetail(decision:)` helper. `AllDecisionsView` rewrapped each card in a `Button(buttonStyle: .plain)` that fires `onSelectDecision` → navigation. Sidebar `This Week` row shows a red badge with the due+overdue count from `thisWeekDueCount`, refreshed in `.task` and on every `.onChange(of: viewModel.destination.navigationKey)` so it stays accurate after marking outcomes. |
+| `gen_xcodeproj.py` | Added `Calibration/` group at app level + `f_outcome_marking`, `f_calibration_service`, `f_calibration_view` source entries; extended `Features/ThisWeek/` and `Features/DecisionDetail/` with the new VM and Detail view; added `grp_tests_thisweek` + `grp_tests_calibration` test groups. |
+
+### Phase 7 test coverage (19 new tests)
+
+- `OutcomeMarkingServiceTests` — 6 cases: `statusForResult` mapping for all 3 results; `OutcomeStatus.isTerminal` for all 5 cases; mark→insert+update via SQL contract; dismiss writes status but no outcomes row; terminal verdicts can't transition (invariant the actor's guard relies on); schema accepts `'dismissed'` and `Verdict.init(row:)` decodes it.
+- `CalibrationServiceTests` — 9 cases: bucket math (zero / partial / all-right / all-wrong); `patternThreshold == 20`; `CalibrationGate.isReady` true only for `.ready`; lens query groups + sorts (1.0 → 0.5 → 0.0); reversibility query aggregates across lenses; gate fires at exactly 20 (boundary).
+- `ThisWeekQueryTests` — 4 cases: includes deadlines within +7d and the boundary; includes overdue; excludes every terminal status (`right`/`partial`/`wrong`/`dismissed`); a dismiss cleanly removes a verdict from the next query.
+
+### Phase 7 architectural decisions
+
+| Decision | Rationale |
+|---|---|
+| `OutcomeMarkingService` is an `actor`, not a `struct` | The state-machine guard (`assertPending`) and the cascade write (insert outcomes + update verdict status) must run inside the same `db.write {}` transaction. An actor gives us a single isolation domain to serialise concurrent mark/dismiss calls without an extra lock. |
+| `dismissed` writes no `outcomes` row | An outcome is a result; dismissal is the absence of one. Storing a sentinel `OutcomeResult.dismissed` would dilute calibration math (you'd have to filter it out everywhere). Calibration queries `WHERE result = 'right'` already ignore dismissed verdicts naturally. |
+| `CalibrationService.fetchBuckets` builds dynamic SQL with a column name interpolated | The `groupColumn` argument is hardcoded at the public-method layer (`calibrationByLens()` passes `"d.lens_template"`; `calibrationByReversibility()` passes `"d.reversibility"`), so it never touches user input. Keeps the SQL DRY without exposing an injection surface. |
+| Apple Charts (system framework) chosen for bar visualisation | macOS 13+; no SPM dependency. Imports as `import Charts`. Hand-rolled `Canvas` bars would have given more control but added 100+ lines for no functional gain at this scale. |
+| Decision Detail Map tab is intentionally a stub in Phase 7 | A fully read-only `GraphView` requires re-running the post-processing pipeline against persisted arguments + clusters (or persisting the simulation state more deeply). Not in Phase 7's definition of done; tracked as TASKS.md polish. The other 4 tabs (Brief / Council / Verdict / Outcome) are all live. |
+| Sidebar badge counted via a `static` query, not the live `ThisWeekViewModel` | The badge needs to refresh from anywhere (after marking, after navigation), even when the This Week screen isn't mounted. A static count query keeps the dependency one-way: `ContentViewModel` → DB, no shared mutable VM. |
+
+---
+
+
 
 ## Post-Phase-6 hotfixes (live)
 
@@ -200,9 +236,15 @@ TheCouncil/
   Database/
     DatabaseManager.swift
     Migrations/Migration001_InitialSchema.swift
+  Calibration/                            ← NEW (Phase 7)
+    OutcomeMarkingService.swift            ← state machine + cascade writes
+    CalibrationService.swift               ← gate + pattern queries
+    CalibrationPatternsView.swift          ← Apple Charts horizontal bars
   Features/
     Configuration/
-    DecisionDetail/AllDecisionsView.swift   ← real query + cards (was a stub)
+    DecisionDetail/
+      AllDecisionsView.swift               ← +onSelectDecision callback
+      DecisionDetailView.swift             ← NEW (Phase 7) — 5-tab Brief/Council/Map/Verdict/Outcome
     Execution/
     Intake/
     Refinement/
@@ -210,7 +252,9 @@ TheCouncil/
     SynthesisMap/
       GraphViewModel.swift   GraphView.swift   ← +onCaptureVerdict
       VerdictTray.swift
-    ThisWeek/ThisWeekView.swift  ← stub (Phase 7)
+    ThisWeek/
+      ThisWeekViewModel.swift              ← NEW (Phase 7)
+      ThisWeekView.swift                   ← rebuilt in Phase 7 (was a stub)
     VerdictCapture/                        ← NEW (Phase 6)
       VerdictCaptureViewModel.swift
       VerdictCaptureView.swift
@@ -221,8 +265,9 @@ TheCouncil/
     LocalResourceGate.swift  MLXRunner.swift  ModelDownloadManager.swift
   Models/
     Decision.swift  ModelRun.swift  Argument.swift  Cluster.swift
-    Verdict.swift   ← +memberwise init
-    Outcome.swift   AppSettings.swift
+    Verdict.swift   ← +memberwise init, +OutcomeStatus.dismissed (Phase 7)
+    Outcome.swift   ← +memberwise init (Phase 7)
+    AppSettings.swift
   Orchestration/
     LensTemplate.swift  LensTemplateLoader.swift
     Persona.swift       PersonaLoader.swift
@@ -234,13 +279,17 @@ TheCouncilTests/
   Keychain/KeychainStoreTests.swift                  ← +trim tests, +setUp/tearDown user-key restore
   LocalInference/   Orchestration/   Refinement/   SynthesisMap/
   VerdictCapture/VerdictCaptureTests.swift           ← NEW (Phase 6)
-  Diagnostics/APIConnectivityDiagnostic.swift        ← NEW post-Phase-6 (opt-in, RUN_DIAGNOSTICS=1)
+  Calibration/                                       ← NEW (Phase 7)
+    OutcomeMarkingServiceTests.swift
+    CalibrationServiceTests.swift
+  ThisWeek/ThisWeekQueryTests.swift                  ← NEW (Phase 7)
+  Diagnostics/APIConnectivityDiagnostic.swift        ← post-Phase-6 (opt-in, RUN_DIAGNOSTICS=1)
 scripts/
   gen_xcodeproj.py   ← +VerdictCapture group + sources
 ```
 
-**Total production Swift:** ~8,011 lines across 52 source files
-**Total test Swift:** ~2,578 lines across 25 test files, 123 tests (27 suites; 1 opt-in diagnostic skipped by default)
+**Total production Swift:** ~9,209 lines across 57 source files
+**Total test Swift:** ~3,061 lines across 28 test files, 142 tests (30 suites; 1 opt-in diagnostic skipped by default)
 
 ---
 
@@ -274,47 +323,53 @@ These are locked in `CLAUDE.md` and enforced by the security-reviewer:
 
 | Flag | Phase it lands | Detail |
 |---|---|---|
-| `ThisWeekView` is a stub | Phase 7 | Shows placeholder text. Full implementation in Phase 7 (verdicts due ≤ 7d or overdue, outcome-mark UI, calibration patterns at ≥20 marked). |
+| Decision Detail Map tab | Polish (post-Phase-7) | Currently shows a placeholder. A read-only graph requires either re-running the post-processing pipeline against persisted args/clusters or persisting more of the simulation state. Other 4 tabs (Brief/Council/Verdict/Outcome) are live. |
 | Concrete `Embedder` implementations | Polish (future) | Cloud OpenAI `text-embedding-3-small`, local MLX sentence-transformers. `PassthroughEmbedder` is the stub. |
 | Token estimation is char/4 heuristic | Future polish | Replace with provider-reported usage. |
-| `OutcomeStatus` enum lacks `.dismissed` | Phase 7 | The schema allows `dismissed` per SPEC §6.9; `Verdict` model writes `.pending` on save and never reads `dismissed`, so deferred until Phase 7 wires "Dismiss" in the calibration ledger. |
-| Decision Detail tabs (Brief / Council / Map / Verdict / Outcome) | Phase 7+ | Currently `AllDecisionsView` shows cards but tap-through is not wired. Phase 7 will add the tabbed Decision Detail per SPEC §7.9. |
 | MLX generate loop | Polish (future) | `MLXRunner` emits a deterministic placeholder; real on-device inference is deferred. |
 | Delete decisions | Polish (post-Phase-6) | `AllDecisionsView` has no delete affordance. TASKS.md "Near-term polish" tracks the cascade-delete spec (DB rows + on-disk decision folder). Decide archive-vs-hard-delete before implementing. |
 | `KeychainStore.Provider` test namespace | Polish (post-Phase-6) | `KeychainStoreTests` shares production service names with the running app; tests now snapshot+restore but a proper test-only namespace would be more robust. Tracked in TASKS.md. |
 
 ---
 
-## Phase 6 — What to do next
+## Phase 7 — What to do next
 
-**Phase 7 — Calibration Ledger (Week 12)**
-Full detail: `PLAN.md §Phase 7`, `SPEC.md §6.9`
+**Phase 8 — Export (Week 13)**
+Full detail: `PLAN.md §Phase 8`, `SPEC.md §6.10`
 
 ### Starting checklist
 
-1. **`ThisWeekView`** (replace stub, `Features/ThisWeek/`) — list verdicts where `outcome_status = 'pending'` AND (deadline ≤ now + 7d OR deadline < now). Show brief summary, "Mark right / partial / wrong / dismiss" controls, optional notes field.
-2. **Outcome state machine** — `pending → right | partial | wrong | dismissed`; terminal. Add `OutcomeStatus.dismissed` to `Verdict.swift` (currently missing). Outcome insertions write to `outcomes` table per SPEC §3.1.
-3. **Sidebar badge** on the `This Week` row — count of due + overdue verdicts. Refresh on view appear and on outcome mark.
-4. **Pattern queries** per SPEC §6.9 — calibration rate by `lens_template`, by `reversibility`. Run only when ≥20 marked outcomes; otherwise show "Patterns appear after 20 marked outcomes. You have N so far."
-5. **Pattern display** — horizontal bar chart per lens, sorted descending by `right_rate`, `n=X` label.
-6. **Decision Detail → Outcome tab** — mark form (if pending) or outcome record display (if marked). Requires the tabbed Decision Detail screen (SPEC §7.9) — likely a sub-task of Phase 7 or a Phase 7.5.
-7. **Tests** (TESTING.md §Phase 7):
-    - This-week query returns only pending verdicts within window
-    - Outcome state machine rejects illegal transitions
-    - Pattern query gate fires at exactly 20
-    - Calibration rate math: 5 right of 10 → 0.5
-8. **Phase 7 exit gate** — mark outcomes on 5 sample verdicts, dismissed verdicts disappear from This Week, pattern view renders without error at low n.
+1. **Markdown export.** Template per SPEC §6.10 (Question / Verdict / Arguments For / Arguments Against / Risk / Blind Spot / Opportunity / Pre-mortem / Outcome details). File name: `[slugified-question]-[YYYY-MM-DD].md`. Slug rules: lowercase, spaces → hyphens, strip non-alphanumerics, truncate at 60 chars.
+2. **PDF export via PDFKit.** US Letter, system serif body, monospace for model names. Header (decision question + date) + footer (page X of Y). Visual parity with on-screen `DecisionDetailView` Verdict tab.
+3. **Export sheet.** "Markdown / PDF / Both" radio choice + destination picker. Default destination from `settings.export_default_path` (already seeded as `~/Desktop`). Show progress + result location.
+4. **Toolbar wiring.** `Export` button in `DecisionDetailView` Verdict tab toolbar. Add the same button to the live Verdict view (post-capture flow) so users can export immediately after saving.
+5. **Slug helper.** Pure `static func slugify(_:) -> String` next to the exporter; small, easy to test.
+6. **Tests** (TESTING.md §Phase 8):
+    - Slug rules: spaces→hyphens, special chars stripped, truncate at 60, unicode safe
+    - Markdown template: rendered output contains every required section header
+    - PDF generation: writes a non-empty file, has expected page count, opens in `Preview` (smoke)
+    - Export sheet: writes to default path, then to a user-chosen path
+7. **Phase 8 exit gate** — export 3 verdicts to both formats, all open cleanly in `Preview` and `Typora`/`Obsidian`.
 
-### Files to add in `gen_xcodeproj.py` before starting
+### Prerequisites before starting Phase 8
+
+- `/spec-check` scoped to SPEC §6.10 + §13 (acceptance criterion 3) and `security-reviewer` on Phase 7 changes (no new network/Keychain code → likely a no-op).
+- Manual end-to-end smoke: open the app, mark a few outcomes from This Week, confirm sidebar badge updates and dismissed verdicts vanish from the list.
+- Confirm PDFKit import is fine (it's a system framework, no SPM addition).
+
+### Files to add in `gen_xcodeproj.py` before starting Phase 8
 ```
 # APP_SOURCES entries:
-("f_thisweek_vm",       "Features/ThisWeek/ThisWeekViewModel.swift"),
-# (ThisWeekView already in APP_SOURCES; will be rewritten not added)
-("f_decision_detail_view", "Features/DecisionDetail/DecisionDetailView.swift"),
+("f_export_engine",    "Export/ExportEngine.swift"),
+("f_export_markdown",  "Export/MarkdownRenderer.swift"),
+("f_export_pdf",       "Export/PDFRenderer.swift"),
+("f_export_view",      "Export/ExportSheet.swift"),
 # TEST_SOURCES entries:
-("f_test_thisweek",     "ThisWeek/ThisWeekTests.swift"),
-("f_test_outcomes",     "Database/OutcomeQueryTests.swift"),
+("f_test_export_md",   "Export/MarkdownRendererTests.swift"),
+("f_test_export_slug", "Export/SlugTests.swift"),
+("f_test_export_pdf",  "Export/PDFRendererTests.swift"),
 ```
+Add `grp_export` group under TheCouncil and `grp_tests_export` under tests root.
 
 ---
 

@@ -40,6 +40,9 @@ Resources/LocalModels/
 *.gguf
 *.safetensors
 *.mlx
+# Un-ignore the in-repo Swift Models package (the models/ rule above was matching it)
+!TheCouncil/Models/
+!TheCouncil/Models/**
 
 # Test artifacts
 *.xcresult

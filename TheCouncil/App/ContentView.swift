@@ -29,6 +29,7 @@ enum NavigationDestination {
     case execution(Decision, tasksByRound: [Int: [OrchestratorTask]], guardrails: CostGuardrails)
     case synthesisMap(Decision, GraphViewModel)
     case verdictCapture(Decision, GraphViewModel)
+    case decisionDetail(Decision)
 
     var navigationKey: String {
         switch self {
@@ -38,6 +39,7 @@ enum NavigationDestination {
         case .execution(let d, _, _): return "execution:\(d.id)"
         case .synthesisMap(let d, _): return "synthesisMap:\(d.id)"
         case .verdictCapture(let d, _): return "verdictCapture:\(d.id)"
+        case .decisionDetail(let d): return "decisionDetail:\(d.id)"
         }
     }
 }
@@ -50,9 +52,15 @@ final class ContentViewModel {
     var selectedItem: SidebarItem? = .allDecisions
     var destination: NavigationDestination = .sidebarItem(.allDecisions)
     var airGapActive: Bool = false
+    var thisWeekDueCount: Int = 0
 
     func refreshAirGapIndicator() {
         airGapActive = AirGapURLProtocol.active
+    }
+
+    func refreshThisWeekBadge() async {
+        let count = (try? await ThisWeekViewModel.fetchDueCount(db: .shared, now: Date())) ?? 0
+        thisWeekDueCount = count
     }
 
     func navigate(to item: SidebarItem) {
@@ -83,6 +91,10 @@ final class ContentViewModel {
     func navigateToVerdictCapture(decision: Decision, graphViewModel: GraphViewModel) {
         destination = .verdictCapture(decision, graphViewModel)
     }
+
+    func navigateToDecisionDetail(decision: Decision) {
+        destination = .decisionDetail(decision)
+    }
 }
 
 // MARK: - ContentView
@@ -95,7 +107,19 @@ struct ContentView: View {
         NavigationSplitView {
             List(SidebarItem.allCases, selection: $viewModel.selectedItem) { item in
                 NavigationLink(value: item) {
-                    Label(item.rawValue, systemImage: item.systemImage)
+                    HStack {
+                        Label(item.rawValue, systemImage: item.systemImage)
+                        Spacer()
+                        if item == .thisWeek, viewModel.thisWeekDueCount > 0 {
+                            Text("\(viewModel.thisWeekDueCount)")
+                                .font(.caption2)
+                                .monospacedDigit()
+                                .padding(.horizontal, 6).padding(.vertical, 1)
+                                .background(Color.red)
+                                .foregroundStyle(.white)
+                                .clipShape(Capsule())
+                        }
+                    }
                 }
             }
             .navigationTitle("The Council")
@@ -122,9 +146,11 @@ struct ContentView: View {
         }
         .task {
             viewModel.refreshAirGapIndicator()
+            await viewModel.refreshThisWeekBadge()
         }
         .onChange(of: viewModel.destination.navigationKey) { _, _ in
             viewModel.refreshAirGapIndicator()
+            Task { await viewModel.refreshThisWeekBadge() }
         }
     }
 
@@ -195,6 +221,8 @@ struct ContentView: View {
                 onSave: { viewModel.navigate(to: .allDecisions) },
                 onCancel: { viewModel.navigateToSynthesisMap(decision: decision, graphViewModel: graphVM) }
             )
+        case .decisionDetail(let decision):
+            DecisionDetailView(viewModel: DecisionDetailViewModel(decision: decision))
         }
     }
 
@@ -208,7 +236,9 @@ struct ContentView: View {
         case .thisWeek:
             ThisWeekView()
         case .allDecisions:
-            AllDecisionsView()
+            AllDecisionsView(onSelectDecision: { decision in
+                viewModel.navigateToDecisionDetail(decision: decision)
+            })
         case .settings:
             SettingsView()
         }

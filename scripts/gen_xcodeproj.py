@@ -100,6 +100,12 @@ APP_SOURCES = [
     # Phase 6
     ("f_verdict_capture_vm",    "Features/VerdictCapture/VerdictCaptureViewModel.swift"),
     ("f_verdict_capture_view",  "Features/VerdictCapture/VerdictCaptureView.swift"),
+    # Phase 7
+    ("f_outcome_marking",       "Calibration/OutcomeMarkingService.swift"),
+    ("f_calibration_service",   "Calibration/CalibrationService.swift"),
+    ("f_calibration_view",      "Calibration/CalibrationPatternsView.swift"),
+    ("f_thisweek_vm",           "Features/ThisWeek/ThisWeekViewModel.swift"),
+    ("f_decision_detail_view",  "Features/DecisionDetail/DecisionDetailView.swift"),
 ]
 
 TEST_SOURCES = [
@@ -134,6 +140,10 @@ TEST_SOURCES = [
     ("f_test_graph_vm",         "SynthesisMap/GraphViewModelTests.swift"),
     # Phase 6
     ("f_test_verdict_capture",  "VerdictCapture/VerdictCaptureTests.swift"),
+    # Phase 7
+    ("f_test_outcome_marking",  "Calibration/OutcomeMarkingServiceTests.swift"),
+    ("f_test_calibration",      "Calibration/CalibrationServiceTests.swift"),
+    ("f_test_thisweek",         "ThisWeek/ThisWeekQueryTests.swift"),
     # Diagnostics (opt-in, gated by RUN_DIAGNOSTICS env var)
     ("f_test_diagnostics",      "Diagnostics/APIConnectivityDiagnostic.swift"),
 ]
@@ -320,6 +330,7 @@ def pbxproj() -> str:
     w(f"\t\t\t\t{uid('grp_local_inference')} /* LocalInference */,")
     w(f"\t\t\t\t{uid('grp_orchestration')} /* Orchestration */,")
     w(f"\t\t\t\t{uid('grp_features')} /* Features */,")
+    w(f"\t\t\t\t{uid('grp_calibration')} /* Calibration */,")
     w(f"\t\t\t\t{uid('grp_forcegraph')} /* ForceGraph */,")
     w(f"\t\t\t\t{uid('grp_resources')} /* Resources */,")
     w(f"\t\t\t\t{uid('f_assets')} /* Assets.xcassets */,")
@@ -536,6 +547,7 @@ def pbxproj() -> str:
     w(f"\t\t\tisa = PBXGroup;")
     w(f"\t\t\tchildren = (")
     w(f"\t\t\t\t{uid('f_thisweek_view')} /* ThisWeekView.swift */,")
+    w(f"\t\t\t\t{uid('f_thisweek_vm')} /* ThisWeekViewModel.swift */,")
     w(f"\t\t\t);")
     w(f"\t\t\tpath = ThisWeek;")
     w(f"\t\t\tsourceTree = \"<group>\";")
@@ -546,8 +558,21 @@ def pbxproj() -> str:
     w(f"\t\t\tisa = PBXGroup;")
     w(f"\t\t\tchildren = (")
     w(f"\t\t\t\t{uid('f_allDecisions_view')} /* AllDecisionsView.swift */,")
+    w(f"\t\t\t\t{uid('f_decision_detail_view')} /* DecisionDetailView.swift */,")
     w(f"\t\t\t);")
     w(f"\t\t\tpath = DecisionDetail;")
+    w(f"\t\t\tsourceTree = \"<group>\";")
+    w(f"\t\t}};")
+
+    # Calibration group (Phase 7)
+    w(f"\t\t{uid('grp_calibration')} /* Calibration */ = {{")
+    w(f"\t\t\tisa = PBXGroup;")
+    w(f"\t\t\tchildren = (")
+    w(f"\t\t\t\t{uid('f_outcome_marking')} /* OutcomeMarkingService.swift */,")
+    w(f"\t\t\t\t{uid('f_calibration_service')} /* CalibrationService.swift */,")
+    w(f"\t\t\t\t{uid('f_calibration_view')} /* CalibrationPatternsView.swift */,")
+    w(f"\t\t\t);")
+    w(f"\t\t\tpath = Calibration;")
     w(f"\t\t\tsourceTree = \"<group>\";")
     w(f"\t\t}};")
 
@@ -588,6 +613,8 @@ def pbxproj() -> str:
     w(f"\t\t\t\t{uid('grp_tests_local')} /* LocalInference */,")
     w(f"\t\t\t\t{uid('grp_tests_synthesis')} /* SynthesisMap */,")
     w(f"\t\t\t\t{uid('grp_tests_verdict')} /* VerdictCapture */,")
+    w(f"\t\t\t\t{uid('grp_tests_thisweek')} /* ThisWeek */,")
+    w(f"\t\t\t\t{uid('grp_tests_calibration')} /* Calibration */,")
     w(f"\t\t\t\t{uid('grp_tests_diagnostics')} /* Diagnostics */,")
     w(f"\t\t\t);")
     w(f"\t\t\tpath = TheCouncilTests;")
@@ -699,6 +726,27 @@ def pbxproj() -> str:
     w(f"\t\t\t\t{uid('f_test_verdict_capture')} /* VerdictCaptureTests.swift */,")
     w(f"\t\t\t);")
     w(f"\t\t\tpath = VerdictCapture;")
+    w(f"\t\t\tsourceTree = \"<group>\";")
+    w(f"\t\t}};")
+
+    # ThisWeek tests group (Phase 7)
+    w(f"\t\t{uid('grp_tests_thisweek')} /* ThisWeek */ = {{")
+    w(f"\t\t\tisa = PBXGroup;")
+    w(f"\t\t\tchildren = (")
+    w(f"\t\t\t\t{uid('f_test_thisweek')} /* ThisWeekQueryTests.swift */,")
+    w(f"\t\t\t);")
+    w(f"\t\t\tpath = ThisWeek;")
+    w(f"\t\t\tsourceTree = \"<group>\";")
+    w(f"\t\t}};")
+
+    # Calibration tests group (Phase 7)
+    w(f"\t\t{uid('grp_tests_calibration')} /* Calibration */ = {{")
+    w(f"\t\t\tisa = PBXGroup;")
+    w(f"\t\t\tchildren = (")
+    w(f"\t\t\t\t{uid('f_test_outcome_marking')} /* OutcomeMarkingServiceTests.swift */,")
+    w(f"\t\t\t\t{uid('f_test_calibration')} /* CalibrationServiceTests.swift */,")
+    w(f"\t\t\t);")
+    w(f"\t\t\tpath = Calibration;")
     w(f"\t\t\tsourceTree = \"<group>\";")
     w(f"\t\t}};")
 
