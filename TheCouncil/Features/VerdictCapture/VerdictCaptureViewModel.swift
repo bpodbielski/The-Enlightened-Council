@@ -242,7 +242,7 @@ final class VerdictCaptureViewModel {
 
     // MARK: - JSON helpers
 
-    static func encodeArgumentTexts(_ items: [TrayItem]) -> String {
+    nonisolated static func encodeArgumentTexts(_ items: [TrayItem]) -> String {
         let texts = items.map(\.text)
         guard let data = try? JSONEncoder().encode(texts),
               let str = String(data: data, encoding: .utf8) else {
@@ -251,7 +251,7 @@ final class VerdictCaptureViewModel {
         return str
     }
 
-    static func decodeArgumentTexts(_ json: String) -> [String] {
+    nonisolated static func decodeArgumentTexts(_ json: String) -> [String] {
         guard let data = json.data(using: .utf8),
               let arr = try? JSONDecoder().decode([String].self, from: data) else {
             return []

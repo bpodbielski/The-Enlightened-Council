@@ -106,6 +106,12 @@ APP_SOURCES = [
     ("f_calibration_view",      "Calibration/CalibrationPatternsView.swift"),
     ("f_thisweek_vm",           "Features/ThisWeek/ThisWeekViewModel.swift"),
     ("f_decision_detail_view",  "Features/DecisionDetail/DecisionDetailView.swift"),
+    # Phase 8
+    ("f_export_slug",           "Export/Slug.swift"),
+    ("f_export_markdown",       "Export/MarkdownRenderer.swift"),
+    ("f_export_pdf",            "Export/PDFRenderer.swift"),
+    ("f_export_engine",         "Export/ExportEngine.swift"),
+    ("f_export_sheet",          "Export/ExportSheet.swift"),
 ]
 
 TEST_SOURCES = [
@@ -144,6 +150,10 @@ TEST_SOURCES = [
     ("f_test_outcome_marking",  "Calibration/OutcomeMarkingServiceTests.swift"),
     ("f_test_calibration",      "Calibration/CalibrationServiceTests.swift"),
     ("f_test_thisweek",         "ThisWeek/ThisWeekQueryTests.swift"),
+    # Phase 8
+    ("f_test_export_slug",      "Export/SlugTests.swift"),
+    ("f_test_export_md",        "Export/MarkdownRendererTests.swift"),
+    ("f_test_export_pdf",       "Export/PDFRendererTests.swift"),
     # Diagnostics (opt-in, gated by RUN_DIAGNOSTICS env var)
     ("f_test_diagnostics",      "Diagnostics/APIConnectivityDiagnostic.swift"),
 ]
@@ -331,6 +341,7 @@ def pbxproj() -> str:
     w(f"\t\t\t\t{uid('grp_orchestration')} /* Orchestration */,")
     w(f"\t\t\t\t{uid('grp_features')} /* Features */,")
     w(f"\t\t\t\t{uid('grp_calibration')} /* Calibration */,")
+    w(f"\t\t\t\t{uid('grp_export')} /* Export */,")
     w(f"\t\t\t\t{uid('grp_forcegraph')} /* ForceGraph */,")
     w(f"\t\t\t\t{uid('grp_resources')} /* Resources */,")
     w(f"\t\t\t\t{uid('f_assets')} /* Assets.xcassets */,")
@@ -576,6 +587,20 @@ def pbxproj() -> str:
     w(f"\t\t\tsourceTree = \"<group>\";")
     w(f"\t\t}};")
 
+    # Export group (Phase 8)
+    w(f"\t\t{uid('grp_export')} /* Export */ = {{")
+    w(f"\t\t\tisa = PBXGroup;")
+    w(f"\t\t\tchildren = (")
+    w(f"\t\t\t\t{uid('f_export_slug')} /* Slug.swift */,")
+    w(f"\t\t\t\t{uid('f_export_markdown')} /* MarkdownRenderer.swift */,")
+    w(f"\t\t\t\t{uid('f_export_pdf')} /* PDFRenderer.swift */,")
+    w(f"\t\t\t\t{uid('f_export_engine')} /* ExportEngine.swift */,")
+    w(f"\t\t\t\t{uid('f_export_sheet')} /* ExportSheet.swift */,")
+    w(f"\t\t\t);")
+    w(f"\t\t\tpath = Export;")
+    w(f"\t\t\tsourceTree = \"<group>\";")
+    w(f"\t\t}};")
+
     # SynthesisMap feature group (Phase 5)
     w(f"\t\t{uid('grp_feat_synthesis')} /* SynthesisMap */ = {{")
     w(f"\t\t\tisa = PBXGroup;")
@@ -615,6 +640,7 @@ def pbxproj() -> str:
     w(f"\t\t\t\t{uid('grp_tests_verdict')} /* VerdictCapture */,")
     w(f"\t\t\t\t{uid('grp_tests_thisweek')} /* ThisWeek */,")
     w(f"\t\t\t\t{uid('grp_tests_calibration')} /* Calibration */,")
+    w(f"\t\t\t\t{uid('grp_tests_export')} /* Export */,")
     w(f"\t\t\t\t{uid('grp_tests_diagnostics')} /* Diagnostics */,")
     w(f"\t\t\t);")
     w(f"\t\t\tpath = TheCouncilTests;")
@@ -747,6 +773,18 @@ def pbxproj() -> str:
     w(f"\t\t\t\t{uid('f_test_calibration')} /* CalibrationServiceTests.swift */,")
     w(f"\t\t\t);")
     w(f"\t\t\tpath = Calibration;")
+    w(f"\t\t\tsourceTree = \"<group>\";")
+    w(f"\t\t}};")
+
+    # Export tests group (Phase 8)
+    w(f"\t\t{uid('grp_tests_export')} /* Export */ = {{")
+    w(f"\t\t\tisa = PBXGroup;")
+    w(f"\t\t\tchildren = (")
+    w(f"\t\t\t\t{uid('f_test_export_slug')} /* SlugTests.swift */,")
+    w(f"\t\t\t\t{uid('f_test_export_md')} /* MarkdownRendererTests.swift */,")
+    w(f"\t\t\t\t{uid('f_test_export_pdf')} /* PDFRendererTests.swift */,")
+    w(f"\t\t\t);")
+    w(f"\t\t\tpath = Export;")
     w(f"\t\t\tsourceTree = \"<group>\";")
     w(f"\t\t}};")
 

@@ -1,10 +1,40 @@
 # The Council — Handoff Document
 
 **Date:** 2026-04-26
-**Session scope:** Phase 7 (Calibration Ledger) — closes on top of Phases 0–6
+**Session scope:** Phase 8 (Export) — closes on top of Phases 0–7
 **Build status:** ✅ BUILD SUCCEEDED
-**Test status:** ✅ 141 tests pass (30 suites) + 1 opt-in diagnostic skipped by default
+**Test status:** ✅ 168 tests pass (33 suites) + 1 opt-in diagnostic skipped by default
 **Repository:** [github.com/bpodbielski/The-Enlightened-Council](https://github.com/bpodbielski/The-Enlightened-Council) — public, default branch `main`, remote `origin` (HTTPS)
+
+## Phase 8 — Export (CLOSED, core)
+
+| Deliverable | Notes |
+|---|---|
+| `Slug` enum | `Slug.slugify(_:)` lowercases, folds Unicode diacritics, collapses any non-`[a-z0-9]` run into a single hyphen, trims leading/trailing hyphens, then truncates to 60 chars (and re-trims if the cut landed mid-separator). `Slug.filename(question:date:)` composes `<slug>-YYYY-MM-DD` using `en_US_POSIX` so file names are locale-stable. Pure functions — every test runs without GRDB. |
+| `ExportPayload` | Bundle struct — decision + verdict + optional outcome + model_runs. Computed `modelPanel` (insertion-order-preserving deduped list of `modelName`) and `totalCostUsd` (sum of `costUsd ?? 0` across runs). Both renderers consume this so they share the same input contract. |
+| `MarkdownRenderer` | Pure `enum`. `render(_ payload:)` produces the exact SPEC §6.10 template: H1 question, metadata block (Date/Lens/Confidence/Outcome deadline), then H2 sections for Verdict / Arguments For / Arguments Against / Risk / Blind Spot / Opportunity / Pre-mortem / Test, plus a horizontal-rule footer with `Model panel: …` and `Total cost: $0.00`. Empty arg lists render `_(none)_`. Outcome section appears only when `verdict.outcomeStatus.isTerminal && != .dismissed`. |
+| `PDFRenderer` | Pure `enum`. Builds an `NSAttributedString` body with system-serif body, bold H2s, monospace for the model panel/cost summary. Walks `CTFramesetter` via successive `CFRange`s to paginate; each page draws header (question · date · lens) + footer (`<model panel> · $cost` left-aligned, `Page X of Y` right-aligned) outside the body rect. US Letter (612×792 pt). Returns `Data` directly — `PDFDocument(data:)` round-trips cleanly. Two-pass pagination (count pages first, then render with the final count) so footers can show `X of Y`. |
+| `ExportEngine` | `actor`. `export(decision:format:to:)` loads the latest verdict + outcome + runs in one GRDB read, hands them to whichever renderer(s) the user picked, and writes `<slug>-YYYY-MM-DD.{md,pdf}` atomically into the destination. `defaultExportDirectory()` reads `settings.export_default_path` (default `~/Desktop`, expands `~`). `ExportError` is exhaustive: `.verdictNotFound(decisionId:)`, `.writeFailed(path:underlying:)`. Throws (with the path) on missing/locked destinations. |
+| `ExportFormat` enum | `.markdown / .pdf / .both`, `Sendable`, `CaseIterable`. Drives the segmented picker. |
+| `ExportSheet` (SwiftUI) | Modal sheet: format segmented picker, destination row with "Choose…" button (`NSOpenPanel`), Export button (`borderedProminent`, default action), result block with per-file "Reveal" buttons (`NSWorkspace.activateFileViewerSelecting`). `@Observable @MainActor ExportSheetViewModel` owns destination + format + result + error state. Async export runs on the actor; the view shows a `ProgressView` while in flight. |
+| `DecisionDetailView` toolbar | Conditional `Export` toolbar item — only renders when `selectedTab == .verdict && viewModel.verdict != nil`. Tap loads the default export dir (async) and presents the sheet. |
+| `VerdictCaptureViewModel` | `encodeArgumentTexts` and `decodeArgumentTexts` flipped to `nonisolated` so the renderers (which are non-MainActor) can call them. Both are pure JSON helpers — actor isolation was overkill. |
+| `gen_xcodeproj.py` | Added `f_export_slug`, `f_export_markdown`, `f_export_pdf`, `f_export_engine`, `f_export_sheet` (and three test entries) plus a new `grp_export` group under `grp_thecouncil` and `grp_tests_export` under `grp_tests_root`. |
+
+### Phase 8 test coverage (28 new tests; 30 suites → 33)
+- `SlugTests` (11) — lowercase, hyphen substitution, collapsed runs, punctuation strip, leading/trailing trim, empty input, accented Unicode (`naïve résumé` → `naive-resume`), emoji + CJK as separators, 60-char cap, no trailing hyphen after truncation, `Slug.filename` composes slug + date in en_US_POSIX.
+- `MarkdownRendererTests` (9) — every required H2 header present, metadata block formatted, arguments rendered as bullets, model panel + cost line present, empty-args fallback, outcome section appears for `.right`, omitted for `.dismissed` and `.pending`, model panel preserves insertion order.
+- `PDFRendererTests` (7) — non-empty bytes, parseable by `PDFKit.PDFDocument`, mediabox is 612×792 (US Letter), long content paginates to >1 page, extracted text contains every required header, header+footer text contains question + both models + cost, page marker reads `Page X of Y`.
+
+### Phase 8 implementation notes
+
+- **PDFKit vs Core Text.** Used Core Text directly for body layout because `PDFKit.PDFPage` doesn't accept attributed-string content; PDFKit owns parsing/loading on the read side. The `PDFRenderer` is the only file that touches `AppKit` — used purely for `NSAttributedString` + `NSFont` + `NSColor` to drive Core Text. SwiftUI is unaffected.
+- **Two-pass pagination.** Footers need `Page X of Y` so the renderer paginates the framesetter once to count pages, then renders the same ranges with that count. Cost is small (CTFramesetter caches the typesetter; the second pass is the one that actually emits PDF bytes).
+- **Model panel ordering.** Insertion order, not alphabetic, because the user typically thinks "I had Anthropic, then OpenAI, then xAI on the panel" in the order configured. Dedupe via `Set<String>` insertion on iteration.
+- **`nonisolated static` JSON helpers.** Originally lived on `VerdictCaptureViewModel` (a `@MainActor` class) because that's where the verdict form needs them. Renderers are not main-actor; making the helpers `nonisolated` is a one-line fix and avoids extracting them into a third file just to share. They're pure functions — no captured state.
+
+---
+
 
 ## Phase 7 — Calibration Ledger (CLOSED, core)
 
@@ -240,11 +270,17 @@ TheCouncil/
     OutcomeMarkingService.swift            ← state machine + cascade writes
     CalibrationService.swift               ← gate + pattern queries
     CalibrationPatternsView.swift          ← Apple Charts horizontal bars
+  Export/                                  ← NEW (Phase 8)
+    Slug.swift                             ← filename slug + date helper
+    MarkdownRenderer.swift                 ← SPEC §6.10 markdown template
+    PDFRenderer.swift                      ← Core Text → CGPDFContext, US Letter
+    ExportEngine.swift                     ← actor; load + render + write
+    ExportSheet.swift                      ← modal: format + destination
   Features/
     Configuration/
     DecisionDetail/
       AllDecisionsView.swift               ← +onSelectDecision callback
-      DecisionDetailView.swift             ← NEW (Phase 7) — 5-tab Brief/Council/Map/Verdict/Outcome
+      DecisionDetailView.swift             ← Phase 7 5-tab; +Export toolbar (Phase 8)
     Execution/
     Intake/
     Refinement/
@@ -256,7 +292,7 @@ TheCouncil/
       ThisWeekViewModel.swift              ← NEW (Phase 7)
       ThisWeekView.swift                   ← rebuilt in Phase 7 (was a stub)
     VerdictCapture/                        ← NEW (Phase 6)
-      VerdictCaptureViewModel.swift
+      VerdictCaptureViewModel.swift        ← +nonisolated JSON helpers (Phase 8)
       VerdictCaptureView.swift
   ForceGraph/
     ForceSimulation.swift   BarnesHutQuadtree.swift
@@ -283,13 +319,17 @@ TheCouncilTests/
     OutcomeMarkingServiceTests.swift
     CalibrationServiceTests.swift
   ThisWeek/ThisWeekQueryTests.swift                  ← NEW (Phase 7)
+  Export/                                            ← NEW (Phase 8)
+    SlugTests.swift
+    MarkdownRendererTests.swift
+    PDFRendererTests.swift
   Diagnostics/APIConnectivityDiagnostic.swift        ← post-Phase-6 (opt-in, RUN_DIAGNOSTICS=1)
 scripts/
-  gen_xcodeproj.py   ← +VerdictCapture group + sources
+  gen_xcodeproj.py   ← +Export group + sources
 ```
 
-**Total production Swift:** ~9,209 lines across 57 source files
-**Total test Swift:** ~3,061 lines across 28 test files, 142 tests (30 suites; 1 opt-in diagnostic skipped by default)
+**Total production Swift:** ~9,989 lines across 62 source files
+**Total test Swift:** ~3,429 lines across 31 test files, 169 tests (33 suites; 1 opt-in diagnostic skipped by default)
 
 ---
 
@@ -324,52 +364,45 @@ These are locked in `CLAUDE.md` and enforced by the security-reviewer:
 | Flag | Phase it lands | Detail |
 |---|---|---|
 | Decision Detail Map tab | Polish (post-Phase-7) | Currently shows a placeholder. A read-only graph requires either re-running the post-processing pipeline against persisted args/clusters or persisting more of the simulation state. Other 4 tabs (Brief/Council/Verdict/Outcome) are live. |
+| Live Verdict view "Export" button | Phase 9 polish | Phase 8 added the Export toolbar item to the `DecisionDetailView` Verdict tab. The post-capture `VerdictCaptureView` (immediately after Save) does not yet surface an Export action — round-trip via All Decisions for now. Trivial to add when we want it. |
 | Concrete `Embedder` implementations | Polish (future) | Cloud OpenAI `text-embedding-3-small`, local MLX sentence-transformers. `PassthroughEmbedder` is the stub. |
 | Token estimation is char/4 heuristic | Future polish | Replace with provider-reported usage. |
 | MLX generate loop | Polish (future) | `MLXRunner` emits a deterministic placeholder; real on-device inference is deferred. |
-| Delete decisions | Polish (post-Phase-6) | `AllDecisionsView` has no delete affordance. TASKS.md "Near-term polish" tracks the cascade-delete spec (DB rows + on-disk decision folder). Decide archive-vs-hard-delete before implementing. |
+| Delete decisions | Polish (post-Phase-6) | `AllDecisionsView` has no delete affordance. TASKS.md "Near-term polish" tracks the cascade-delete spec (DB rows + on-disk decision folder + exported files). Decide archive-vs-hard-delete before implementing. |
 | `KeychainStore.Provider` test namespace | Polish (post-Phase-6) | `KeychainStoreTests` shares production service names with the running app; tests now snapshot+restore but a proper test-only namespace would be more robust. Tracked in TASKS.md. |
+| PDF page-marker right-alignment uses string-width approximation | Phase 9 polish | The footer's "Page X of Y" right-aligns by measuring the rendered string width with the system font and shifting origin. Works for the short page-number string; if we ever right-align variable-length text we should switch to `CTLineGetTypographicBounds` for precision. |
 
 ---
 
-## Phase 7 — What to do next
+## Phase 8 — What to do next
 
-**Phase 8 — Export (Week 13)**
-Full detail: `PLAN.md §Phase 8`, `SPEC.md §6.10`
+**Phase 9 — Polish (Weeks 14–15)**
+Full detail: `PLAN.md §Phase 9`
 
 ### Starting checklist
 
-1. **Markdown export.** Template per SPEC §6.10 (Question / Verdict / Arguments For / Arguments Against / Risk / Blind Spot / Opportunity / Pre-mortem / Outcome details). File name: `[slugified-question]-[YYYY-MM-DD].md`. Slug rules: lowercase, spaces → hyphens, strip non-alphanumerics, truncate at 60 chars.
-2. **PDF export via PDFKit.** US Letter, system serif body, monospace for model names. Header (decision question + date) + footer (page X of Y). Visual parity with on-screen `DecisionDetailView` Verdict tab.
-3. **Export sheet.** "Markdown / PDF / Both" radio choice + destination picker. Default destination from `settings.export_default_path` (already seeded as `~/Desktop`). Show progress + result location.
-4. **Toolbar wiring.** `Export` button in `DecisionDetailView` Verdict tab toolbar. Add the same button to the live Verdict view (post-capture flow) so users can export immediately after saving.
-5. **Slug helper.** Pure `static func slugify(_:) -> String` next to the exporter; small, easy to test.
-6. **Tests** (TESTING.md §Phase 8):
-    - Slug rules: spaces→hyphens, special chars stripped, truncate at 60, unicode safe
-    - Markdown template: rendered output contains every required section header
-    - PDF generation: writes a non-empty file, has expected page count, opens in `Preview` (smoke)
-    - Export sheet: writes to default path, then to a user-chosen path
-7. **Phase 8 exit gate** — export 3 verdicts to both formats, all open cleanly in `Preview` and `Typora`/`Obsidian`.
+1. **Error and empty states.** All API error banners per SPEC §8.1–8.2 wired to real UI. "Partial results" banner on the Synthesis Map for failed runs. Empty-state copy for All Decisions, This Week, Synthesis Map (no args), and the calibration patterns sub-20-marked screen (already in place).
+2. **Onboarding.** First-launch modal when no API keys are configured → routes to Settings → Models. One-time "Start here" tooltip over `New Decision`.
+3. **Accessibility.** VoiceOver labels/hints on every control; Dynamic Type honored (no fixed sizes); full keyboard tab order; Synthesis Map keyboard navigation (arrow-key node selection, Space to add to tray, Escape to deselect); 4.5:1 contrast minimum; visible focus rings.
+4. **Performance audit.** Profile each screen, fix anything dropping below 60 fps. Force-graph spike already passed; the audit is mostly transitions + scroll perf.
+5. **App icon + About screen.** Version, build number, changelog summary.
+6. **Signing and notarization.** Developer ID + `xcrun notarytool` workflow. Wire `scripts/build-dmg.sh` and `scripts/notarize.sh` (currently stubs).
+7. **Live Verdict view Export action.** Add the same Export toolbar item to the post-capture `VerdictCaptureView` so users can export immediately after Save without round-tripping through All Decisions.
+8. **Phase 9 exit gate** — every happy path feels finished, no placeholder UI visible, accessibility audit traverses every screen via VoiceOver without dead ends, signed-and-notarized DMG mounts on a clean macOS 15.
 
-### Prerequisites before starting Phase 8
+### Prerequisites before starting Phase 9
 
-- `/spec-check` scoped to SPEC §6.10 + §13 (acceptance criterion 3) and `security-reviewer` on Phase 7 changes (no new network/Keychain code → likely a no-op).
-- Manual end-to-end smoke: open the app, mark a few outcomes from This Week, confirm sidebar badge updates and dismissed verdicts vanish from the list.
-- Confirm PDFKit import is fine (it's a system framework, no SPM addition).
+- `/spec-check` scoped to SPEC §8 + §13 (acceptance criteria 1, 5, 9, 10).
+- `security-reviewer` on Phase 8 — no new network/Keychain code (Export is filesystem-only) → likely a no-op, but worth a pass since signing/notarization is in scope for Phase 9.
+- Manual end-to-end smoke: drive a complete decision (Intake → Refinement → Configuration → Execution → Synthesis Map → Verdict Capture → Decision Detail → Export both formats) and confirm the Markdown opens in Typora/Obsidian and the PDF opens in Preview.
 
-### Files to add in `gen_xcodeproj.py` before starting Phase 8
+### Files to add in `gen_xcodeproj.py` before starting Phase 9
 ```
-# APP_SOURCES entries:
-("f_export_engine",    "Export/ExportEngine.swift"),
-("f_export_markdown",  "Export/MarkdownRenderer.swift"),
-("f_export_pdf",       "Export/PDFRenderer.swift"),
-("f_export_view",      "Export/ExportSheet.swift"),
-# TEST_SOURCES entries:
-("f_test_export_md",   "Export/MarkdownRendererTests.swift"),
-("f_test_export_slug", "Export/SlugTests.swift"),
-("f_test_export_pdf",  "Export/PDFRendererTests.swift"),
+# Likely additions (refine as scope solidifies):
+("f_onboarding",   "Features/Onboarding/OnboardingView.swift"),
+("f_partial_banner", "Features/SynthesisMap/PartialResultsBanner.swift"),
 ```
-Add `grp_export` group under TheCouncil and `grp_tests_export` under tests root.
+No new test groups expected; Phase 9 is largely UI polish + manual review.
 
 ---
 

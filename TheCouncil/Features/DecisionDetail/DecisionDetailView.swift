@@ -104,6 +104,8 @@ struct DecisionDetailView: View {
 
     @State var viewModel: DecisionDetailViewModel
     @State private var selectedTab: Tab = .brief
+    @State private var exportSheetVisible = false
+    @State private var exportSheetVM: ExportSheetViewModel?
 
     enum Tab: String, CaseIterable, Identifiable {
         case brief, council, map, verdict, outcome
@@ -118,12 +120,34 @@ struct DecisionDetailView: View {
             tabContent
         }
         .navigationTitle(viewModel.decision.question)
+        .toolbar {
+            if selectedTab == .verdict, viewModel.verdict != nil {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        Task { await openExportSheet() }
+                    } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $exportSheetVisible) {
+            if let vm = exportSheetVM {
+                ExportSheet(viewModel: vm, onClose: { exportSheetVisible = false })
+            }
+        }
         .task { await viewModel.load() }
         .alert("Error", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+    }
+
+    private func openExportSheet() async {
+        let dest = await ExportEngine().defaultExportDirectory()
+        exportSheetVM = ExportSheetViewModel(decision: viewModel.decision, destination: dest)
+        exportSheetVisible = true
     }
 
     // MARK: - Tab bar
